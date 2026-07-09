@@ -1,7 +1,7 @@
 {
-  "name": "wanderlust-server",
+  "name": "HabiTrek-server",
   "version": "1.0.0",
-  "description": "WanderLust REST API server",
+  "description": "HabiTrek REST API server",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",

@@ -19,13 +19,34 @@ const bookingRouter = require('./routes/booking.js');
 
 const app = express();
 
-const dbUrl = process.env.ATLAS_DB_URL || 'mongodb://127.0.0.1:27017/wanderlust';
+const dbUrl = process.env.ATLAS_DB_URL || 'mongodb://127.0.0.1:27017/HabiTrek';
 const secret = process.env.SECRET || 'fallback-secret-change-me';
 
 // ─── Database ────────────────────────────────────────────────────────────────
 mongoose
   .connect(dbUrl)
-  .then(() => console.log('✅ Database connected'))
+  .then(async () => {
+    console.log('✅ Database connected');
+    try {
+      const Listing = require('./models/listing.js');
+      const count = await Listing.countDocuments();
+      if (count === 0) {
+        console.log('🌱 Database is empty. Seeding sample listings...');
+        const sampleListings = require('./utils/sampleListings.js');
+        const User = require('./models/user.js');
+        let owner = await User.findOne({ username: 'admin' });
+        if (!owner) {
+          const newUser = new User({ email: 'admin@HabiTrek.com', username: 'admin' });
+          owner = await User.register(newUser, 'admin123');
+        }
+        const listingsWithOwner = sampleListings.map(l => ({ ...l, owner: owner._id }));
+        await Listing.insertMany(listingsWithOwner);
+        console.log('✅ Seeding completed successfully!');
+      }
+    } catch (e) {
+      console.error('❌ Auto-seeding failed:', e);
+    }
+  })
   .catch((err) => console.error('❌ Database connection failed:', err));
 
 // ─── Middleware ───────────────────────────────────────────────────────────────

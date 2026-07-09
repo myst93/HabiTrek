@@ -23,7 +23,7 @@ export default function Navbar() {
       {/* Brand */}
       <Link to="/listings" className="navbar-brand" id="nav-brand">
         <i className="fa-regular fa-compass"></i>
-        <span>WanderLust</span>
+        <span>HabiTrek</span>
       </Link>
 
       {/* Search */}
@@ -67,9 +67,9 @@ export default function Navbar() {
 
         {currentUser ? (
           <>
-            <span className="nav-link" style={{ cursor: 'default', color: 'var(--text-muted)' }}>
-              Hi, {currentUser.username}
-            </span>
+            <Link to="/profile" className="nav-link" id="nav-profile" style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}>
+              <i className="fa-regular fa-circle-user" style={{ marginRight: '0.35rem', fontSize: '1.15rem' }}></i> Profile
+            </Link>
             <button
               className="btn btn-outline btn-sm"
               onClick={handleLogout}

@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import BookingsList from './pages/BookingsList';
 import WishlistList from './pages/WishlistList';
+import UserProfile from './pages/UserProfile';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/listings/:id/edit" element={<ListingEdit />} />
           <Route path="/bookings" element={<BookingsList />} />
           <Route path="/wishlist" element={<WishlistList />} />
+          <Route path="/profile" element={<UserProfile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
         </Routes>

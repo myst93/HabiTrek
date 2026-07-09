@@ -21,7 +21,7 @@ module.exports.chatConcierge = async (req, res) => {
   // Graceful fallback if GEMINI_API_KEY is not configured
   if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'fallback-secret-change-me') {
     console.warn('⚠️ GEMINI_API_KEY not configured. Using mock fallback responses.');
-    
+
     // Simulate a smart localized travel response
     const mockAnswer = generateMockConciergeResponse(listing, query);
     return res.json({ response: mockAnswer, isMock: true });
@@ -29,7 +29,7 @@ module.exports.chatConcierge = async (req, res) => {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const systemInstruction = `You are a helpful and local concierge/travel guide for a property listed on WanderLust (an Airbnb-like site).
+    const systemInstruction = `You are a helpful and local concierge/travel guide for a property listed on HabiTrek (an Airbnb-like site).
 The property details are:
 - Title: ${listing.title}
 - Location: ${listing.location}, ${listing.country}
@@ -149,7 +149,7 @@ function generateMockConciergeResponse(listing, query) {
 
   // Keyword check for itinerary/roaming/explore, including common user typos
   const isItinerary = q.includes('itinerary') || q.includes('iternary') || q.includes('iteranry') || q.includes('itinerry') || q.includes('plan') || q.includes('day') || q.includes('roam') || q.includes('spot') || q.includes('visit') || q.includes('sight') || q.includes('explore') || q.includes('place') || q.includes('location') || q.includes('activity') || q.includes('attraction') || q.includes('view') || q.includes('go to') || q.includes('see');
-  
+
   const isFood = q.includes('eat') || q.includes('food') || q.includes('restaurant') || q.includes('cafe') || q.includes('dining') || q.includes('breakfast') || q.includes('lunch') || q.includes('dinner') || q.includes('cuisine') || q.includes('specialty') || q.includes('drink');
 
   const isPacking = q.includes('pack') || q.includes('wear') || q.includes('clothing') || q.includes('bring') || q.includes('bag') || q.includes('weather') || q.includes('climate') || q.includes('temperature');

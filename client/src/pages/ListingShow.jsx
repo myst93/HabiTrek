@@ -96,8 +96,8 @@ function parseItineraryTimeline(text, onSaveItinerary) {
         ))}
       </div>
       {onSaveItinerary && (
-        <button 
-          type="button" 
+        <button
+          type="button"
           className="save-itinerary-btn"
           onClick={() => onSaveItinerary(text)}
         >
@@ -140,7 +140,7 @@ export default function ListingShow() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [guests, setGuests] = useState(1);
-  
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -221,7 +221,7 @@ export default function ListingShow() {
       setChatHistory([
         {
           role: 'model',
-          content: `Hi! I'm your WanderLust AI Concierge. 🌟 Ask me anything about staying at **${listing.title}** in **${listing.location}**! Can I help you with an itinerary, packing tips, or local dining recommendations?`,
+          content: `Hi! I'm your HabiTrek AI Concierge. 🌟 Ask me anything about staying at **${listing.title}** in **${listing.location}**! Can I help you with an itinerary, packing tips, or local dining recommendations?`,
         },
       ]);
     }
@@ -232,10 +232,10 @@ export default function ListingShow() {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const checkout = new Date(tomorrow);
     checkout.setDate(checkout.getDate() + 3);
-    
+
     setStartDate(tomorrow.toISOString().split('T')[0]);
     setEndDate(checkout.toISOString().split('T')[0]);
   }, []);
@@ -304,6 +304,12 @@ export default function ListingShow() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
+  const nights = getNightsCount();
+  const basePrice = listing ? listing.price * nights : 0;
+  const cleaningFee = listing ? Math.round(listing.price * nights * 0.15) : 0;
+  const serviceFee = listing ? Math.round(listing.price * nights * 0.08) : 0;
+  const totalPrice = basePrice + cleaningFee + serviceFee;
+
   const handleReserveClick = (e) => {
     e.preventDefault();
     if (!currentUser) {
@@ -333,12 +339,6 @@ export default function ListingShow() {
     setPaying(true);
     setTimeout(async () => {
       try {
-        const nights = getNightsCount();
-        const basePrice = listing.price * nights;
-        const cleaningFee = Math.round(listing.price * 0.15);
-        const serviceFee = Math.round(listing.price * 0.08);
-        const totalPrice = basePrice + cleaningFee + serviceFee;
-
         await api.post('/bookings', {
           listingId: id,
           startDate,
@@ -440,6 +440,19 @@ export default function ListingShow() {
   return (
     <div className="show-page">
       <h1 className="show-title">{listing.title}</h1>
+      
+      {/* Sub-headline / Meta Details under Title */}
+      <div className="show-meta" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.25rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+        <span><i className="fa-solid fa-star" style={{ color: '#ffb700' }}></i> {listing.review?.length > 0 ? (listing.review.reduce((sum, r) => sum + r.rating, 0) / listing.review.length).toFixed(1) : 'No reviews'}</span>
+        <span>•</span>
+        <span><i className="fa-solid fa-location-dot"></i> {listing.location}, {listing.country}</span>
+        {listing.category && (
+          <>
+            <span>•</span>
+            <span style={{ backgroundColor: 'var(--bg-light)', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-sm)', fontWeight: 600, color: 'var(--brand)', fontSize: '0.8rem' }}>{listing.category}</span>
+          </>
+        )}
+      </div>
 
       <img
         src={imgSrc}
@@ -447,47 +460,84 @@ export default function ListingShow() {
         className="show-img"
         onError={(e) => { e.target.src = DEFAULT_IMG; }}
         id="listing-main-img"
+        style={{ width: '100%', maxHeight: '520px', objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: '2rem' }}
       />
-
-      <p className="show-owner">
-        Owned by <i>{listing.owner?.username || 'Unknown'}</i>
-      </p>
 
       {/* Main Two-Column Layout */}
       <div className="show-main-layout">
         <div className="show-left-column">
-          <div className="show-info-grid">
-            <div className="show-info-item">
-              <label>Description</label>
-              <p>{listing.description}</p>
+          
+          {/* Host / Heading Section */}
+          <div className="host-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>Entire home hosted by {listing.owner?.username || 'Unknown'}</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: '0.25rem 0 0' }}>Self check-in • Dedicated workspace • Superhost hospitality</p>
             </div>
-            <div className="show-info-item">
-              <label>Price per night</label>
-              <p>&#8377; {listing.price?.toLocaleString('en-IN')}</p>
+            <div style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              backgroundColor: '#6c429d',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '1.25rem',
+              boxShadow: 'var(--shadow-sm)'
+            }}>
+              {(listing.owner?.username || 'U')[0].toUpperCase()}
             </div>
-            <div className="show-info-item">
-              <label>Location</label>
-              <p>{listing.location}</p>
+          </div>
+
+          {/* Description Section */}
+          <div className="description-section" style={{ marginBottom: '2rem' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.75rem' }}>About this space</h3>
+            <p style={{ fontSize: '1.02rem', lineHeight: '1.6', color: 'var(--text-primary)', whiteSpace: 'pre-line' }}>
+              {listing.description}
+            </p>
+          </div>
+
+          <hr className="divider" style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1.5rem 0' }} />
+
+          {/* Spec details row */}
+          <div className="listing-specs-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+            <div className="spec-card" style={{ border: '1px solid var(--border)', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <i className="fa-solid fa-indian-rupee-sign" style={{ fontSize: '1.3rem', color: 'var(--brand)' }}></i>
+              <div>
+                <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Price per night</span>
+                <strong style={{ fontSize: '0.95rem' }}>₹{listing.price?.toLocaleString('en-IN')}</strong>
+              </div>
             </div>
-            <div className="show-info-item">
-              <label>Country</label>
-              <p>{listing.country}</p>
+            <div className="spec-card" style={{ border: '1px solid var(--border)', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <i className="fa-solid fa-map-location-dot" style={{ fontSize: '1.3rem', color: 'var(--brand)' }}></i>
+              <div>
+                <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Location</span>
+                <strong style={{ fontSize: '0.95rem' }}>{listing.location}</strong>
+              </div>
+            </div>
+            <div className="spec-card" style={{ border: '1px solid var(--border)', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <i className="fa-solid fa-globe" style={{ fontSize: '1.3rem', color: 'var(--brand)' }}></i>
+              <div>
+                <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Country</span>
+                <strong style={{ fontSize: '0.95rem' }}>{listing.country}</strong>
+              </div>
             </div>
           </div>
 
           {/* Owner actions */}
           {isOwner && (
-            <div className="owner-actions" style={{ marginBottom: '1.5rem' }}>
+            <div className="owner-actions" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem' }}>
               <Link to={`/listings/${id}/edit`} className="btn btn-dark" id="btn-edit-listing">
-                <i className="fa-solid fa-pen"></i> Edit
+                <i className="fa-solid fa-pen"></i> Edit listing
               </Link>
               <button className="btn btn-danger" onClick={handleDelete} id="btn-delete-listing">
-                <i className="fa-solid fa-trash"></i> Delete
+                <i className="fa-solid fa-trash"></i> Delete listing
               </button>
             </div>
           )}
 
-          <hr className="divider" />
+          <hr className="divider" style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1.5rem 0' }} />
 
           {/* Map and AI Concierge */}
           <div className="map-and-ai-container">
@@ -733,23 +783,23 @@ export default function ListingShow() {
                 </div>
               </div>
 
-              {getNightsCount() > 0 && (
+              {nights > 0 && (
                 <div className="booking-price-breakdown">
                   <div className="breakdown-row">
-                    <span>&#8377; {listing.price?.toLocaleString('en-IN')} x {getNightsCount()} nights</span>
-                    <span>&#8377; {(listing.price * getNightsCount()).toLocaleString('en-IN')}</span>
+                    <span>&#8377; {listing.price?.toLocaleString('en-IN')} x {nights} nights</span>
+                    <span>&#8377; {basePrice.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="breakdown-row">
                     <span>Cleaning fee (15%)</span>
-                    <span>&#8377; {Math.round(listing.price * getNightsCount() * 0.15).toLocaleString('en-IN')}</span>
+                    <span>&#8377; {cleaningFee.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="breakdown-row">
                     <span>Service fee (8%)</span>
-                    <span>&#8377; {Math.round(listing.price * getNightsCount() * 0.08).toLocaleString('en-IN')}</span>
+                    <span>&#8377; {serviceFee.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="breakdown-row total">
                     <span>Total cost</span>
-                    <span>&#8377; {Math.round(listing.price * getNightsCount() * 1.23).toLocaleString('en-IN')}</span>
+                    <span>&#8377; {totalPrice.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
               )}

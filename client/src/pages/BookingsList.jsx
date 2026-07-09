@@ -13,6 +13,7 @@ export default function BookingsList() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('upcoming');
 
   useEffect(() => {
     api.get('/bookings')
@@ -44,23 +45,83 @@ export default function BookingsList() {
     );
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcomingBookings = bookings.filter((booking) => {
+    const end = new Date(booking.endDate);
+    return end >= today;
+  });
+
+  const pastBookings = bookings.filter((booking) => {
+    const end = new Date(booking.endDate);
+    return end < today;
+  });
+
+  const currentList = activeTab === 'upcoming' ? upcomingBookings : pastBookings;
+
   return (
     <div className="bookings-page">
       <h2 style={{ marginBottom: '1.5rem', fontWeight: 700 }}>My Bookings</h2>
-      {bookings.length === 0 ? (
+
+      {/* Tabs */}
+      <div className="bookings-tabs" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem' }}>
+        <button
+          className={`tab-btn ${activeTab === 'upcoming' ? 'active' : ''}`}
+          onClick={() => setActiveTab('upcoming')}
+          style={{
+            padding: '0.75rem 1rem',
+            border: 'none',
+            background: 'none',
+            borderBottom: activeTab === 'upcoming' ? '2px solid var(--brand)' : '2px solid transparent',
+            color: activeTab === 'upcoming' ? 'var(--brand)' : 'var(--text-muted)',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontSize: '0.95rem',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Upcoming Bookings ({upcomingBookings.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'past' ? 'active' : ''}`}
+          onClick={() => setActiveTab('past')}
+          style={{
+            padding: '0.75rem 1rem',
+            border: 'none',
+            background: 'none',
+            borderBottom: activeTab === 'past' ? '2px solid var(--brand)' : '2px solid transparent',
+            color: activeTab === 'past' ? 'var(--brand)' : 'var(--text-muted)',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontSize: '0.95rem',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Past Bookings ({pastBookings.length})
+        </button>
+      </div>
+
+      {currentList.length === 0 ? (
         <div className="empty-state" style={{ padding: '3rem 1rem' }}>
           <i className="fa-solid fa-briefcase" style={{ fontSize: '3.5rem', color: 'var(--text-muted)', opacity: 0.7 }}></i>
-          <p style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>No bookings made yet</p>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            Book your next getaway and experience WanderLust hospitality!
+          <p style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
+            {activeTab === 'upcoming' ? 'No upcoming bookings' : 'No past bookings'}
           </p>
-          <Link to="/listings" className="btn btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
-            Search stays
-          </Link>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            {activeTab === 'upcoming'
+              ? 'Book your next getaway and experience HabiTrek hospitality!'
+              : 'Keep wandering! Your completed trips will show up here.'}
+          </p>
+          {activeTab === 'upcoming' && (
+            <Link to="/listings" className="btn btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
+              Search stays
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bookings-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {bookings.map((booking) => {
+          {currentList.map((booking) => {
             const listing = booking.listing || {};
             const imgSrc = listing.image?.url || listing.image || DEFAULT_IMG;
             const checkIn = formatDate(booking.startDate);
@@ -91,14 +152,14 @@ export default function BookingsList() {
                         </Link>
                       </h3>
                       <span style={{
-                        backgroundColor: '#d4edda',
-                        color: '#155724',
+                        backgroundColor: activeTab === 'upcoming' ? '#d4edda' : '#e2e3e5',
+                        color: activeTab === 'upcoming' ? '#155724' : '#383d41',
                         fontSize: '0.78rem',
                         fontWeight: 600,
                         padding: '0.25rem 0.6rem',
                         borderRadius: 'var(--radius-sm)'
                       }}>
-                        {booking.status}
+                        {activeTab === 'upcoming' ? booking.status : 'Completed'}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>

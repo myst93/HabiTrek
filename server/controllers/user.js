@@ -9,7 +9,7 @@ module.exports.signup = async (req, res, next) => {
     req.login(registeredUser, (err) => {
       if (err) return next(err);
       res.status(201).json({
-        message: 'Welcome to WanderLust!',
+        message: 'Welcome to HabiTrek!',
         user: { _id: registeredUser._id, username: registeredUser.username, email: registeredUser.email },
       });
     });
@@ -38,11 +38,51 @@ module.exports.logout = (req, res, next) => {
 module.exports.me = (req, res) => {
   if (req.isAuthenticated()) {
     res.json({
-      user: { _id: req.user._id, username: req.user.username, email: req.user.email, wishlist: req.user.wishlist || [] },
+      user: {
+        _id: req.user._id,
+        username: req.user.username,
+        email: req.user.email,
+        wishlist: req.user.wishlist || [],
+        bio: req.user.bio,
+        phone: req.user.phone,
+        location: req.user.location,
+        avatar: req.user.avatar,
+        createdAt: req.user.createdAt,
+      },
     });
   } else {
     res.json({ user: null });
   }
+};
+
+// PUT /api/profile — update current user profile details
+module.exports.updateProfile = async (req, res) => {
+  const { bio, phone, location, avatar } = req.body;
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  if (bio !== undefined) user.bio = bio;
+  if (phone !== undefined) user.phone = phone;
+  if (location !== undefined) user.location = location;
+  if (avatar !== undefined) user.avatar = avatar;
+
+  await user.save();
+  res.json({
+    message: 'Profile updated successfully!',
+    user: {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      wishlist: user.wishlist || [],
+      bio: user.bio,
+      phone: user.phone,
+      location: user.location,
+      avatar: user.avatar,
+      createdAt: user.createdAt,
+    },
+  });
 };
 
 // POST /api/wishlist/toggle/:listingId - Toggle a listing in the wishlist

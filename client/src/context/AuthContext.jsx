@@ -44,8 +44,19 @@ export function AuthProvider({ children }) {
     showFlash('success', 'You have been logged out.');
   }, [showFlash]);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await api.get('/me');
+      setCurrentUser(res.data.user);
+      return res.data.user;
+    } catch (err) {
+      setCurrentUser(null);
+      return null;
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ currentUser, loading, flash, showFlash, clearFlash, login, signup, logout }}>
+    <AuthContext.Provider value={{ currentUser, loading, flash, showFlash, clearFlash, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -64,7 +64,7 @@ export default function Login() {
         </button>
       </form>
       <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-        New to WanderLust? <Link to="/signup" style={{ color: 'var(--brand)', fontWeight: 600 }}>Create an account</Link>
+        New to HabiTrek? <Link to="/signup" style={{ color: 'var(--brand)', fontWeight: 600 }}>Create an account</Link>
       </p>
     </div>
   );

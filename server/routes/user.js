@@ -36,4 +36,7 @@ router.get('/logout', userController.logout);
 router.post('/wishlist/toggle/:listingId', isLoggedIn, wrapAsync(userController.toggleWishlist));
 router.get('/wishlist', isLoggedIn, wrapAsync(userController.getWishlist));
 
+// Profile update endpoint
+router.put('/profile', isLoggedIn, wrapAsync(userController.updateProfile));
+
 module.exports = router;

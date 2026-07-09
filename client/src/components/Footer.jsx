@@ -2,7 +2,7 @@ export default function Footer() {
   return (
     <footer>
       <div className="footer-inner">
-        <div className="footer-brand">&copy; {new Date().getFullYear()} WanderLust Private Limited</div>
+        <div className="footer-brand">&copy; {new Date().getFullYear()} HabiTrek Private Limited</div>
 
         <div className="footer-socials">
           <a href="#" aria-label="Instagram" id="footer-instagram">
