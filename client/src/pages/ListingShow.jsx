@@ -477,7 +477,7 @@ export default function ListingShow() {
               width: '52px',
               height: '52px',
               borderRadius: '50%',
-              backgroundColor: '#6c429d',
+              backgroundColor: 'var(--brand)',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
@@ -635,15 +635,15 @@ export default function ListingShow() {
           {/* Saved Itineraries Tab */}
           {savedItineraries.length > 0 && (
             <div className="saved-itineraries-tab" id="saved-itineraries-section">
-              <h3><i className="fa-solid fa-bookmark" style={{ color: '#6c429d' }}></i> Saved Itineraries</h3>
+              <h3><i className="fa-solid fa-bookmark" style={{ color: 'var(--brand)' }}></i> Saved Itineraries</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 {savedItineraries.map((itinerary, idx) => (
                   <div key={idx} style={{
-                    border: '1px solid #e1d6eb',
+                    border: '1px solid #cce3d8',
                     borderRadius: '8px',
                     padding: '1.25rem',
                     position: 'relative',
-                    backgroundColor: '#faf8fc'
+                    backgroundColor: '#eaf5f0'
                   }}>
                     <button
                       type="button"
@@ -828,7 +828,7 @@ export default function ListingShow() {
           <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
             <div className="payment-modal-header">
               <h3>
-                <i className="fa-solid fa-credit-card" style={{ color: '#6c429d' }}></i> Secure Payment
+                <i className="fa-solid fa-credit-card" style={{ color: 'var(--brand)' }}></i> Secure Payment
               </h3>
               {!paying && (
                 <button className="close-modal-btn" onClick={() => setShowPaymentModal(false)}>

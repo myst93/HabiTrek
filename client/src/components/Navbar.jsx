@@ -48,12 +48,6 @@ export default function Navbar() {
       <div className="navbar-links">
         {currentUser && (
           <>
-            <Link to="/wishlist" className="nav-link" id="nav-wishlist" style={{ display: 'flex', alignItems: 'center' }}>
-              <i className="fa-solid fa-heart" style={{ marginRight: '0.35rem', color: 'var(--brand)' }}></i> Wishlist
-            </Link>
-            <Link to="/bookings" className="nav-link" id="nav-bookings" style={{ display: 'flex', alignItems: 'center' }}>
-              <i className="fa-solid fa-briefcase" style={{ marginRight: '0.35rem' }}></i> Bookings
-            </Link>
             <Link to="/listings/new" className="nav-link btn-outline" id="nav-new-listing">
               + List your home
             </Link>

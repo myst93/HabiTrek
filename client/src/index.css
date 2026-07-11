@@ -6,8 +6,8 @@
 }
 
 :root {
-  --brand:       #fe424d;
-  --brand-dark:  #e0333e;
+  --brand:       #2d6a4f;
+  --brand-dark:  #1b4332;
   --text-primary: #222222;
   --text-muted:   #717171;
   --border:       #dddddd;
@@ -53,8 +53,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
+  background: #eaf5f0;
+  border-bottom: 1px solid #cce3d8;
   height: 5rem;
   display: flex;
   align-items: center;
@@ -88,7 +88,7 @@ body {
 .search-form {
   display: flex;
   align-items: center;
-  border: 1px solid var(--border);
+  border: 1px solid #a5d6a7;
   border-radius: var(--radius-full);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -108,6 +108,7 @@ body {
   font-family: inherit;
   width: 260px;
   color: var(--text-primary);
+  background: transparent;
 }
 
 .search-btn {
@@ -729,12 +730,12 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 
 .ai-concierge-card:hover {
-  box-shadow: 0 8px 30px rgba(138, 43, 226, 0.08);
+  box-shadow: 0 8px 30px rgba(45, 106, 79, 0.08);
 }
 
 .ai-card-header {
   padding: 1rem 1.25rem;
-  background: linear-gradient(90deg, #6c429d 0%, #8b4bb8 100%);
+  background: linear-gradient(90deg, var(--brand) 0%, var(--brand-dark) 100%);
   color: white;
   display: flex;
   justify-content: space-between;
@@ -777,14 +778,14 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 
 .ai-message.user {
-  background-color: #6c429d;
+  background-color: var(--brand);
   color: white;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
 }
 
 .ai-message.assistant {
-  background-color: #f1ecf6;
+  background-color: #eaf5f0;
   color: var(--text-primary);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
@@ -825,19 +826,19 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 .suggestion-pill {
   background: white;
-  border: 1px solid #e1d6eb;
+  border: 1px solid #cce3d8;
   border-radius: var(--radius-full);
   padding: 0.4rem 0.8rem;
   font-size: 0.78rem;
-  color: #6c429d;
+  color: var(--brand);
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition);
 }
 
 .suggestion-pill:hover {
-  background: #f6f1fc;
-  border-color: #6c429d;
+  background: #eaf5f0;
+  border-color: var(--brand);
   transform: translateY(-1px);
 }
 
@@ -849,7 +850,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 .ai-chat-input-area input {
   flex: 1;
-  border: 1px solid #e1d6eb;
+  border: 1px solid #cce3d8;
   border-radius: var(--radius-full);
   padding: 0.6rem 1rem;
   font-size: 0.88rem;
@@ -859,11 +860,11 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 
 .ai-chat-input-area input:focus {
-  border-color: #8b4bb8;
+  border-color: var(--brand);
 }
 
 .ai-send-btn {
-  background: #6c429d;
+  background: var(--brand);
   color: white;
   border: none;
   border-radius: var(--radius-full);
@@ -875,7 +876,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 
 .ai-send-btn:hover:not(:disabled) {
-  background: #563380;
+  background: var(--brand-dark);
 }
 
 .ai-send-btn:disabled {
@@ -887,7 +888,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .ai-loading-container {
   display: flex;
   align-self: flex-start;
-  background-color: #f1ecf6;
+  background-color: #eaf5f0;
   padding: 0.75rem 1.25rem;
   border-radius: var(--radius-md);
   border-bottom-left-radius: 4px;
@@ -902,7 +903,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .ai-dot {
   width: 6px;
   height: 6px;
-  background-color: #8b4bb8;
+  background-color: var(--brand);
   border-radius: 50%;
   animation: pulse 1.2s infinite ease-in-out;
 }
@@ -917,8 +918,8 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 /* AI Generator Card (Forms) */
 .ai-generator-panel {
-  background: linear-gradient(135deg, #fcfaff 0%, #f6f1fc 100%);
-  border: 1px solid #dcd0eb;
+  background: linear-gradient(135deg, #ffffff 0%, #eaf5f0 100%);
+  border: 1px solid #cce3d8;
   border-radius: var(--radius-md);
   padding: 1.25rem;
   margin-bottom: 1.75rem;
@@ -927,7 +928,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 .ai-generator-panel h4 {
   font-size: 1rem;
-  color: #563380;
+  color: var(--brand-dark);
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
@@ -937,7 +938,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .ai-notes-input {
   width: 100%;
   min-height: 60px;
-  border: 1px solid #dcd0eb;
+  border: 1px solid #cce3d8;
   border-radius: var(--radius-sm);
   padding: 0.6rem;
   font-size: 0.88rem;
@@ -949,11 +950,11 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 
 .ai-notes-input:focus {
-  border-color: #8b4bb8;
+  border-color: var(--brand);
 }
 
 .btn-ai {
-  background: linear-gradient(90deg, #6c429d 0%, #8b4bb8 100%);
+  background: linear-gradient(90deg, var(--brand) 0%, var(--brand-dark) 100%);
   color: white;
   border: none;
   border-radius: var(--radius-sm);
@@ -1222,7 +1223,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 
 .credit-card-graphic {
-  background: linear-gradient(135deg, #1f1c2c 0%, #6c429d 100%);
+  background: linear-gradient(135deg, #1f1c2c 0%, var(--brand) 100%);
   border-radius: 12px;
   padding: 1.25rem;
   color: white;
@@ -1306,20 +1307,20 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #6c429d;
+  background: var(--brand);
   color: white;
   font-size: 0.72rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 3px #e1d6eb;
+  box-shadow: 0 0 0 3px #cce3d8;
 }
 
 .timeline-line {
   width: 2px;
   flex: 1;
-  background: #e1d6eb;
+  background: #cce3d8;
   margin-top: 0.35rem;
 }
 
@@ -1330,7 +1331,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .timeline-card {
   flex: 1;
   background: white;
-  border: 1px solid #e1d6eb;
+  border: 1px solid #cce3d8;
   border-radius: var(--radius-sm);
   padding: 0.75rem 1rem;
   box-shadow: var(--shadow-sm);
@@ -1339,14 +1340,14 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 .timeline-card:hover {
   transform: translateX(3px);
-  border-color: #8b4bb8;
+  border-color: var(--brand);
 }
 
 .timeline-card h4 {
   margin: 0 0 0.3rem 0;
   font-size: 0.88rem;
   font-weight: 700;
-  color: #563380;
+  color: var(--brand-dark);
 }
 
 .timeline-card p {
@@ -1359,11 +1360,11 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 /* Save / Like Itinerary Button */
 .save-itinerary-btn {
   background: none;
-  border: 1px solid #e1d6eb;
+  border: 1px solid #cce3d8;
   border-radius: var(--radius-sm);
   padding: 0.35rem 0.65rem;
   font-size: 0.75rem;
-  color: #6c429d;
+  color: var(--brand);
   font-weight: 600;
   cursor: pointer;
   margin-top: 0.5rem;
@@ -1374,8 +1375,8 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 
 .save-itinerary-btn:hover {
-  background: #f6f1fc;
-  border-color: #6c429d;
+  background: #eaf5f0;
+  border-color: var(--brand);
 }
 
 /* Liked itineraries display tab */

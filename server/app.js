@@ -53,17 +53,38 @@ mongoose
 // Allow the Vite dev server (port 5173) and production origin to send cookies
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173', // Vite dev
-      'http://localhost:4173', // Vite preview
-      process.env.CLIENT_ORIGIN || 'http://localhost:5173',
-    ],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:5175',
+        'http://localhost:4173',
+      ];
+      const isLocalhost =
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:') ||
+        origin === 'http://localhost' ||
+        origin === 'http://127.0.0.1';
+      if (
+        allowedOrigins.indexOf(origin) !== -1 ||
+        isLocalhost ||
+        origin === process.env.CLIENT_ORIGIN
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true, // allow cookies (sessions) to be sent cross-origin
   })
 );
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────
 const store = MongoStore.create({
