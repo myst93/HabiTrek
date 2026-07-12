@@ -1,7 +1,7 @@
 # HabiTrek
 
 A full-stack vacation-rental app (React + Node/Express + MongoDB) with listings, bookings, reviews, authentication, wishlist and basic AI utilities.
-
+  
 ## Features
 - User authentication (signup / login)
 - Listings: create, edit, view, delete
