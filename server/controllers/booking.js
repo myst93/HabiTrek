@@ -21,11 +21,11 @@ module.exports.createBooking = async (req, res) => {
     endDate,
     guests,
     totalPrice,
-    status: 'Confirmed', // Automatically confirm in this mock flow
+    status: 'Pending', // Initialize as Pending for checkout
   });
 
   await newBooking.save();
-  res.status(201).json({ message: 'Booking confirmed successfully!', booking: newBooking });
+  res.status(201).json({ message: 'Booking requested successfully. Please complete payment.', booking: newBooking });
 };
 
 // GET /api/bookings - Get bookings for the current user
@@ -36,3 +36,44 @@ module.exports.getUserBookings = async (req, res) => {
 
   res.json({ bookings });
 };
+
+// GET /api/bookings/:id - Get a specific booking by ID
+module.exports.getBookingById = async (req, res) => {
+  const booking = await Booking.findById(req.params.id)
+    .populate('listing');
+
+  if (!booking) {
+    return res.status(404).json({ error: 'Booking not found.' });
+  }
+
+  // Ensure user owns this booking
+  if (booking.user.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ error: 'Unauthorized to view this booking.' });
+  }
+
+  res.json({ booking });
+};
+
+// POST /api/bookings/:id/pay - Mark booking as paid (Confirmed)
+module.exports.processBookingPayment = async (req, res) => {
+  const booking = await Booking.findById(req.params.id);
+
+  if (!booking) {
+    return res.status(404).json({ error: 'Booking not found.' });
+  }
+
+  // Ensure user owns this booking
+  if (booking.user.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ error: 'Unauthorized to complete payment for this booking.' });
+  }
+
+  if (booking.status === 'Confirmed') {
+    return res.status(400).json({ error: 'This booking has already been paid.' });
+  }
+
+  booking.status = 'Confirmed';
+  await booking.save();
+
+  res.json({ message: 'Payment successful! Booking confirmed.', booking });
+};
+

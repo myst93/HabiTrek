@@ -310,7 +310,9 @@ export default function ListingShow() {
   const serviceFee = listing ? Math.round(listing.price * nights * 0.08) : 0;
   const totalPrice = basePrice + cleaningFee + serviceFee;
 
-  const handleReserveClick = (e) => {
+  const [reserving, setReserving] = useState(false);
+
+  const handleReserveClick = async (e) => {
     e.preventDefault();
     if (!currentUser) {
       showFlash('error', 'You must be logged in to book a stay.');
@@ -321,46 +323,23 @@ export default function ListingShow() {
       showFlash('error', 'Please select valid check-in and check-out dates.');
       return;
     }
-    setShowPaymentModal(true);
-  };
-
-  const handlePaymentSubmit = async (e) => {
-    e.preventDefault();
-    const cleanNum = cardNum.replace(/\s/g, '');
-    if (cleanNum.length < 16) {
-      showFlash('error', 'Please enter a valid 16-digit card number.');
-      return;
+    
+    setReserving(true);
+    try {
+      const res = await api.post('/bookings', {
+        listingId: id,
+        startDate,
+        endDate,
+        guests,
+        totalPrice
+      });
+      showFlash('success', 'Booking requested! Redirecting to payment checkout...');
+      navigate(`/payment/${res.data.booking._id}`);
+    } catch (err) {
+      showFlash('error', 'Booking failed: ' + err.message);
+    } finally {
+      setReserving(false);
     }
-    if (!cardExpiry || !cardCvv || !cardName.trim()) {
-      showFlash('error', 'Please fill out all card details.');
-      return;
-    }
-
-    setPaying(true);
-    setTimeout(async () => {
-      try {
-        await api.post('/bookings', {
-          listingId: id,
-          startDate,
-          endDate,
-          guests,
-          totalPrice
-        });
-        setPaymentSuccess(true);
-        showFlash('success', 'Stay booked successfully!');
-      } catch (err) {
-        showFlash('error', 'Booking failed: ' + err.message);
-        setShowPaymentModal(false);
-      } finally {
-        setPaying(false);
-      }
-    }, 1500);
-  };
-
-  const handleCardNumChange = (e) => {
-    const value = e.target.value.replace(/\D/g, '').substring(0, 16);
-    const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
-    setCardNum(formatted);
   };
 
   // Scroll AI chat to bottom
@@ -822,141 +801,7 @@ export default function ListingShow() {
         </div>
       </div>
 
-      {/* Credit Card Payment Modal */}
-      {showPaymentModal && (
-        <div className="modal-overlay" onClick={() => !paying && setShowPaymentModal(false)}>
-          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="payment-modal-header">
-              <h3>
-                <i className="fa-solid fa-credit-card" style={{ color: 'var(--brand)' }}></i> Secure Payment
-              </h3>
-              {!paying && (
-                <button className="close-modal-btn" onClick={() => setShowPaymentModal(false)}>
-                  &times;
-                </button>
-              )}
-            </div>
 
-            {paymentSuccess ? (
-              <div className="payment-success-screen">
-                <div className="success-icon-wrap">
-                  <i className="fa-solid fa-check"></i>
-                </div>
-                <h3>Stay Booked! 🎉</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                  Your reservation is confirmed. You can view details in your Bookings list.
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-dark btn-full"
-                  onClick={() => {
-                    setShowPaymentModal(false);
-                    setPaymentSuccess(false);
-                    navigate('/bookings');
-                  }}
-                  style={{ marginTop: '1rem', padding: '0.65rem' }}
-                >
-                  Go to Bookings
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handlePaymentSubmit} className="payment-modal-body">
-                {/* Credit Card mockup graphic */}
-                <div className="credit-card-graphic">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div className="card-chip"></div>
-                    <i className="fa-brands fa-cc-visa" style={{ fontSize: '2rem' }}></i>
-                  </div>
-                  <div className="card-number-display">
-                    {cardNum || '•••• •••• •••• ••••'}
-                  </div>
-                  <div className="card-meta-row">
-                    <div>
-                      <span style={{ display: 'block', fontSize: '0.6rem', opacity: 0.8 }}>Card Holder</span>
-                      <strong>{cardName || 'YOUR NAME'}</strong>
-                    </div>
-                    <div>
-                      <span style={{ display: 'block', fontSize: '0.6rem', opacity: 0.8 }}>Expires</span>
-                      <strong>{cardExpiry || 'MM/YY'}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-group" style={{ marginBottom: '1rem' }}>
-                  <label htmlFor="card-name-input" style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>Cardholder Name</label>
-                  <input
-                    type="text"
-                    id="card-name-input"
-                    className="form-control"
-                    placeholder="Enter cardholder name"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                    required
-                    disabled={paying}
-                  />
-                </div>
-
-                <div className="form-group" style={{ marginBottom: '1rem' }}>
-                  <label htmlFor="card-number-input" style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>Card Number</label>
-                  <input
-                    type="text"
-                    id="card-number-input"
-                    className="form-control"
-                    placeholder="0000 0000 0000 0000"
-                    value={cardNum}
-                    onChange={handleCardNumChange}
-                    required
-                    disabled={paying}
-                  />
-                </div>
-
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div className="form-group">
-                    <label htmlFor="card-expiry-input" style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>Expiration</label>
-                    <input
-                      type="text"
-                      id="card-expiry-input"
-                      className="form-control"
-                      placeholder="MM/YY"
-                      value={cardExpiry}
-                      onChange={(e) => {
-                        let value = e.target.value.replace(/\D/g, '').substring(0, 4);
-                        if (value.length > 2) value = value.substring(0, 2) + '/' + value.substring(2);
-                        setCardExpiry(value);
-                      }}
-                      required
-                      disabled={paying}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="card-cvv-input" style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>CVV</label>
-                    <input
-                      type="password"
-                      id="card-cvv-input"
-                      className="form-control"
-                      placeholder="***"
-                      maxLength={3}
-                      value={cardCvv}
-                      onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
-                      required
-                      disabled={paying}
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-full"
-                  disabled={paying}
-                  style={{ padding: '0.75rem' }}
-                >
-                  {paying ? 'Processing payment…' : `Pay ₹${totalPrice?.toLocaleString('en-IN')}`}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

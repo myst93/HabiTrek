@@ -11,6 +11,7 @@ import Signup from './pages/Signup';
 import BookingsList from './pages/BookingsList';
 import WishlistList from './pages/WishlistList';
 import UserProfile from './pages/UserProfile';
+import Payment from './pages/Payment';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/bookings" element={<BookingsList />} />
           <Route path="/wishlist" element={<WishlistList />} />
           <Route path="/profile" element={<UserProfile />} />
+          <Route path="/payment/:bookingId" element={<Payment />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
         </Routes>

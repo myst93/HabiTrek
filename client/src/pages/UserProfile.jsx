@@ -287,14 +287,19 @@ export default function UserProfile() {
                     const checkOut = formatDate(booking.endDate);
                     const nights = Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000 * 60 * 60 * 24));
 
+                    const isConfirmed = booking.status === 'Confirmed';
+                    const isPending = booking.status === 'Pending';
+
                     return (
                       <div key={booking._id} className="booking-list-card" style={{
                         display: 'flex',
                         border: '1px solid var(--border)',
+                        borderLeft: isConfirmed ? '6px solid var(--brand)' : isPending ? '6px solid #e07a5f' : '1px solid var(--border)',
                         borderRadius: 'var(--radius-md)',
                         overflow: 'hidden',
-                        backgroundColor: 'white',
-                        boxShadow: 'var(--shadow-sm)'
+                        backgroundColor: isConfirmed ? '#f4f9f6' : 'white',
+                        boxShadow: isConfirmed ? '0 4px 18px rgba(45, 106, 79, 0.12)' : 'var(--shadow-sm)',
+                        transition: 'all 0.3s ease'
                       }}>
                         <img
                           src={imgSrc}
@@ -311,14 +316,27 @@ export default function UserProfile() {
                                 </Link>
                               </h3>
                               <span style={{
-                                backgroundColor: bookingSubTab === 'upcoming' ? '#d4edda' : '#e2e3e5',
-                                color: bookingSubTab === 'upcoming' ? '#155724' : '#383d41',
+                                backgroundColor: isConfirmed ? '#d4edda' : isPending ? '#fff3cd' : '#e2e3e5',
+                                color: isConfirmed ? '#155724' : isPending ? '#856404' : '#383d41',
                                 fontSize: '0.78rem',
-                                fontWeight: 600,
-                                padding: '0.25rem 0.6rem',
-                                borderRadius: 'var(--radius-sm)'
+                                fontWeight: 700,
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: 'var(--radius-sm)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem'
                               }}>
-                                {bookingSubTab === 'upcoming' ? booking.status : 'Completed'}
+                                {isConfirmed ? (
+                                  <>
+                                    <i className="fa-solid fa-circle-check"></i> Paid & Confirmed
+                                  </>
+                                ) : isPending ? (
+                                  <>
+                                    <i className="fa-solid fa-circle-exclamation"></i> Payment Pending
+                                  </>
+                                ) : (
+                                  'Completed'
+                                )}
                               </span>
                             </div>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
@@ -342,8 +360,19 @@ export default function UserProfile() {
                           </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '0.75rem', marginTop: '1rem' }}>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Amount Paid</span>
-                            <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>&#8377; {booking.totalPrice?.toLocaleString('en-IN')}</strong>
+                            <div>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                {isPending ? 'Amount Due' : 'Amount Paid'}
+                              </span>
+                              <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)', display: 'block', marginTop: '0.1rem' }}>
+                                &#8377; {booking.totalPrice?.toLocaleString('en-IN')}
+                              </strong>
+                            </div>
+                            {isPending && (
+                              <Link to={`/payment/${booking._id}`} className="btn btn-primary btn-sm" style={{ padding: '0.4rem 1rem', fontSize: '0.82rem', borderRadius: 'var(--radius-sm)', textDecoration: 'none' }}>
+                                <i className="fa-solid fa-credit-card" style={{ marginRight: '0.4rem' }}></i> Pay Now
+                              </Link>
+                            )}
                           </div>
                         </div>
                       </div>
