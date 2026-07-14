@@ -58,6 +58,11 @@ Respond directly in a conversation style.`;
     }
     for (const msg of messageHistory) {
       if (msg.role === 'user' || msg.role === 'model') {
+        // Skip leading model messages (e.g. the initial welcome message)
+        // since Gemini SDK requires the first history entry to be from the 'user'
+        if (history.length === 0 && msg.role === 'model') {
+          continue;
+        }
         history.push({
           role: msg.role,
           parts: [{ text: msg.content }],
