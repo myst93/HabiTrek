@@ -8,7 +8,7 @@ export default function Navbar() {
   const [search, setSearch] = useState('');
 
   const handleSearch = (e) => {
-    e.preventDefault();
+    e.preventDefault(); //for handling the form submission without page reload
     // Basic search — navigates to listings with query param
     navigate(`/listings?search=${encodeURIComponent(search.trim())}`);
   };
