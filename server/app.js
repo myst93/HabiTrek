@@ -4,11 +4,11 @@ if (process.env.NODE_ENV !== 'production') {
 
 const express = require('express');
 const mongoose = require('mongoose');
-const session = require('express-session');
-const { MongoStore } = require('connect-mongo');
+const session = require('express-session'); //this is a middleware that allows you to manage user sessions in your Express application. It provides a way to store and retrieve session data for individual users across multiple requests, enabling features like user authentication and maintaining user state.
+const { MongoStore } = require('connect-mongo'); //It is a session store for Express that uses MongoDB to persist session data. It allows you to store user session information in a MongoDB database, making it suitable for applications that require session management across multiple server instances or when you want to maintain session data even after server restarts.
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
-const cors = require('cors');
+const cors = require('cors'); //it is a middleware that allows you to enable Cross-Origin Resource Sharing (CORS) in your Express application. CORS is a security feature implemented by web browsers that restricts web pages from making requests to a different domain than the one that served the web page. The cors middleware helps you configure and handle CORS-related headers and policies, allowing your server to accept requests from specified origins or domains.
 const User = require('./models/user.js');
 
 const listingRouter = require('./routes/listing.js');
@@ -17,7 +17,7 @@ const userRouter = require('./routes/user.js');
 const aiRouter = require('./routes/ai.js');
 const bookingRouter = require('./routes/booking.js');
 
-const app = express();
+const app = express(); //it is the main application object that represents your Express server. It is created by calling the express() function, and it serves as the central hub for defining routes, middleware, and handling incoming HTTP requests. The app object allows you to configure your server's behavior, set up routes for different endpoints, and manage middleware functions that process requests and responses.
 
 const dbUrl = process.env.ATLAS_DB_URL || 'mongodb://127.0.0.1:27017/HabiTrek';
 const secret = process.env.SECRET || 'fallback-secret-change-me';
