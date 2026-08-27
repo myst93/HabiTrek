@@ -27,40 +27,47 @@ if (process.env.NODE_ENV === 'production') {
 const dbUrl = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/HabiTrek';
 const secret = process.env.SECRET || 'fallback-secret-change-me';
 
-// ─── Database ────────────────────────────────────────────────────────────────
-mongoose
+// ─── Database & Session Store ──────────────────────────────────────────────────
+const dbPromise = mongoose
   .connect(dbUrl)
-  .then(async () => {
+  .then((m) => {
     console.log('✅ Database connected');
-    // Auto-seed only in development or if explicitly requested via SEED_DB env variable
-    if (process.env.NODE_ENV !== 'production' || process.env.SEED_DB === 'true') {
-      try {
-        const Listing = require('./models/listing.js');
-        const sampleListings = require('./utils/sampleListings.js');
-        const User = require('./models/user.js');
-        let owner = await User.findOne({ username: 'admin' });
-        if (!owner) {
-          const newUser = new User({ email: 'admin@HabiTrek.com', username: 'admin' });
-          owner = await User.register(newUser, 'admin123');
-        }
-        
-        const existingListings = await Listing.find({}, 'title');
-        const existingTitles = new Set(existingListings.map(l => l.title));
-        const listingsToInsert = sampleListings
-          .filter(l => !existingTitles.has(l.title))
-          .map(l => ({ ...l, owner: owner._id }));
-
-        if (listingsToInsert.length > 0) {
-          console.log(`🌱 Seeding ${listingsToInsert.length} new sample listings...`);
-          await Listing.insertMany(listingsToInsert);
-          console.log('✅ Seeding completed successfully!');
-        }
-      } catch (e) {
-        console.error('❌ Auto-seeding failed:', e);
-      }
-    }
+    return m.connection.getClient();
   })
-  .catch((err) => console.error('❌ Database connection failed:', err));
+  .catch((err) => {
+    console.error('❌ Database connection failed:', err);
+    throw err;
+  });
+
+// Auto-seed only in development or if explicitly requested via SEED_DB env variable
+if (process.env.NODE_ENV !== 'production' || process.env.SEED_DB === 'true') {
+  dbPromise.then(async () => {
+    try {
+      const Listing = require('./models/listing.js');
+      const sampleListings = require('./utils/sampleListings.js');
+      const User = require('./models/user.js');
+      let owner = await User.findOne({ username: 'admin' });
+      if (!owner) {
+        const newUser = new User({ email: 'admin@HabiTrek.com', username: 'admin' });
+        owner = await User.register(newUser, 'admin123');
+      }
+      
+      const existingListings = await Listing.find({}, 'title');
+      const existingTitles = new Set(existingListings.map(l => l.title));
+      const listingsToInsert = sampleListings
+        .filter(l => !existingTitles.has(l.title))
+        .map(l => ({ ...l, owner: owner._id }));
+
+      if (listingsToInsert.length > 0) {
+        console.log(`🌱 Seeding ${listingsToInsert.length} new sample listings...`);
+        await Listing.insertMany(listingsToInsert);
+        console.log('✅ Seeding completed successfully!');
+      }
+    } catch (e) {
+      console.error('❌ Auto-seeding failed:', e);
+    }
+  }).catch(() => {});
+}
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 // Allow Vite dev server and production origins to send cookies
@@ -98,7 +105,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────
 const store = MongoStore.create({
-  mongoUrl: dbUrl,
+  clientPromise: dbPromise,
   crypto: { secret },
   touchAfter: 24 * 3600,
 });
