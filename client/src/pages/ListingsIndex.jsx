@@ -97,20 +97,22 @@ export default function ListingsIndex() {
     <div>
       {/* ── Filters Bar ─────────────────────────────── */}
       <div className="filters-bar" id="filters-bar">
-        {FILTERS.map((f) => (
-          <div
-            key={f.label}
-            className={`filter-item${activeFilter === f.label ? ' active' : ''}`}
-            onClick={() => setActiveFilter(activeFilter === f.label ? null : f.label)}
-            title={f.label}
-            role="button"
-            tabIndex={0}
-            id={`filter-${f.label.toLowerCase().replace(/\s+/g, '-')}`}
-          >
-            <i className={f.icon}></i>
-            <p>{f.label}</p>
-          </div>
-        ))}
+        <div className="filters-list" id="filters-list">
+          {FILTERS.map((f) => (
+            <div
+              key={f.label}
+              className={`filter-item${activeFilter === f.label ? ' active' : ''}`}
+              onClick={() => setActiveFilter(activeFilter === f.label ? null : f.label)}
+              title={f.label}
+              role="button"
+              tabIndex={0}
+              id={`filter-${f.label.toLowerCase().replace(/\s+/g, '-')}`}
+            >
+              <i className={f.icon}></i>
+              <p>{f.label}</p>
+            </div>
+          ))}
+        </div>
 
         {/* Tax toggle */}
         <div className="tax-toggle-wrap" id="tax-toggle">

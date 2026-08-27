@@ -29,18 +29,23 @@ mongoose
     console.log('✅ Database connected');
     try {
       const Listing = require('./models/listing.js');
-      const count = await Listing.countDocuments();
-      if (count === 0) {
-        console.log('🌱 Database is empty. Seeding sample listings...');
-        const sampleListings = require('./utils/sampleListings.js');
-        const User = require('./models/user.js');
-        let owner = await User.findOne({ username: 'admin' });
-        if (!owner) {
-          const newUser = new User({ email: 'admin@HabiTrek.com', username: 'admin' });
-          owner = await User.register(newUser, 'admin123');
-        }
-        const listingsWithOwner = sampleListings.map(l => ({ ...l, owner: owner._id }));
-        await Listing.insertMany(listingsWithOwner);
+      const sampleListings = require('./utils/sampleListings.js');
+      const User = require('./models/user.js');
+      let owner = await User.findOne({ username: 'admin' });
+      if (!owner) {
+        const newUser = new User({ email: 'admin@HabiTrek.com', username: 'admin' });
+        owner = await User.register(newUser, 'admin123');
+      }
+      
+      const existingListings = await Listing.find({}, 'title');
+      const existingTitles = new Set(existingListings.map(l => l.title));
+      const listingsToInsert = sampleListings
+        .filter(l => !existingTitles.has(l.title))
+        .map(l => ({ ...l, owner: owner._id }));
+
+      if (listingsToInsert.length > 0) {
+        console.log(`🌱 Seeding ${listingsToInsert.length} new sample listings...`);
+        await Listing.insertMany(listingsToInsert);
         console.log('✅ Seeding completed successfully!');
       }
     } catch (e) {
