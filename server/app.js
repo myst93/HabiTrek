@@ -19,7 +19,7 @@ const bookingRouter = require('./routes/booking.js');
 
 const app = express(); //it is the main application object that represents your Express server. It is created by calling the express() function, and it serves as the central hub for defining routes, middleware, and handling incoming HTTP requests. The app object allows you to configure your server's behavior, set up routes for different endpoints, and manage middleware functions that process requests and responses.
 
-const dbUrl = process.env.ATLAS_DB_URL || 'mongodb://127.0.0.1:27017/HabiTrek';
+const dbUrl = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/HabiTrek';
 const secret = process.env.SECRET || 'fallback-secret-change-me';
 
 // ─── Database ────────────────────────────────────────────────────────────────
