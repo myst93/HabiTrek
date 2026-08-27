@@ -17,7 +17,12 @@ const userRouter = require('./routes/user.js');
 const aiRouter = require('./routes/ai.js');
 const bookingRouter = require('./routes/booking.js');
 
-const app = express(); //it is the main application object that represents your Express server. It is created by calling the express() function, and it serves as the central hub for defining routes, middleware, and handling incoming HTTP requests. The app object allows you to configure your server's behavior, set up routes for different endpoints, and manage middleware functions that process requests and responses.
+const app = express();
+
+// Trust reverse proxy (e.g. Render, Heroku, Nginx) so HTTPS cookies work in production
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 const dbUrl = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/HabiTrek';
 const secret = process.env.SECRET || 'fallback-secret-change-me';
@@ -27,58 +32,58 @@ mongoose
   .connect(dbUrl)
   .then(async () => {
     console.log('✅ Database connected');
-    try {
-      const Listing = require('./models/listing.js');
-      const sampleListings = require('./utils/sampleListings.js');
-      const User = require('./models/user.js');
-      let owner = await User.findOne({ username: 'admin' });
-      if (!owner) {
-        const newUser = new User({ email: 'admin@HabiTrek.com', username: 'admin' });
-        owner = await User.register(newUser, 'admin123');
-      }
-      
-      const existingListings = await Listing.find({}, 'title');
-      const existingTitles = new Set(existingListings.map(l => l.title));
-      const listingsToInsert = sampleListings
-        .filter(l => !existingTitles.has(l.title))
-        .map(l => ({ ...l, owner: owner._id }));
+    // Auto-seed only in development or if explicitly requested via SEED_DB env variable
+    if (process.env.NODE_ENV !== 'production' || process.env.SEED_DB === 'true') {
+      try {
+        const Listing = require('./models/listing.js');
+        const sampleListings = require('./utils/sampleListings.js');
+        const User = require('./models/user.js');
+        let owner = await User.findOne({ username: 'admin' });
+        if (!owner) {
+          const newUser = new User({ email: 'admin@HabiTrek.com', username: 'admin' });
+          owner = await User.register(newUser, 'admin123');
+        }
+        
+        const existingListings = await Listing.find({}, 'title');
+        const existingTitles = new Set(existingListings.map(l => l.title));
+        const listingsToInsert = sampleListings
+          .filter(l => !existingTitles.has(l.title))
+          .map(l => ({ ...l, owner: owner._id }));
 
-      if (listingsToInsert.length > 0) {
-        console.log(`🌱 Seeding ${listingsToInsert.length} new sample listings...`);
-        await Listing.insertMany(listingsToInsert);
-        console.log('✅ Seeding completed successfully!');
+        if (listingsToInsert.length > 0) {
+          console.log(`🌱 Seeding ${listingsToInsert.length} new sample listings...`);
+          await Listing.insertMany(listingsToInsert);
+          console.log('✅ Seeding completed successfully!');
+        }
+      } catch (e) {
+        console.error('❌ Auto-seeding failed:', e);
       }
-    } catch (e) {
-      console.error('❌ Auto-seeding failed:', e);
     }
   })
   .catch((err) => console.error('❌ Database connection failed:', err));
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
-// Allow the Vite dev server (port 5173) and production origin to send cookies
+// Allow Vite dev server and production origins to send cookies
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
       const allowedOrigins = [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:5175',
-        'http://localhost:4173',
+        'https://habitrek.onrender.com'
       ];
+      if (process.env.CLIENT_ORIGIN) {
+        allowedOrigins.push(process.env.CLIENT_ORIGIN.replace(/\/$/, ''));
+      }
+      const cleanOrigin = origin.replace(/\/$/, '');
       const isLocalhost =
-        origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:') ||
-        origin === 'http://localhost' ||
-        origin === 'http://127.0.0.1';
-      if (
-        allowedOrigins.indexOf(origin) !== -1 ||
-        isLocalhost ||
-        origin === process.env.CLIENT_ORIGIN
-      ) {
+        cleanOrigin.startsWith('http://localhost:') ||
+        cleanOrigin.startsWith('http://127.0.0.1:') ||
+        cleanOrigin === 'http://localhost' ||
+        cleanOrigin === 'http://127.0.0.1';
+      if (allowedOrigins.includes(cleanOrigin) || isLocalhost) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
     credentials: true, // allow cookies (sessions) to be sent cross-origin

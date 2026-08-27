@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
-const GEOAPIFY_KEY = '6dd4d50fca564a2aa9604fe755ca03f2';
+const GEOAPIFY_KEY = import.meta.env.VITE_GEOAPIFY_KEY || '6dd4d50fca564a2aa9604fe755ca03f2';
 const DEFAULT_CENTER = [28.6139, 77.2090];
 const DEFAULT_IMG = 'https://images.unsplash.com/photo-1625505826533-5c80aca7d157?auto=format&fit=crop&w=800&q=60';
 

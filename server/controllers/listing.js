@@ -26,7 +26,7 @@ module.exports.createListing = async (req, res) => {
     if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
       url = req.file.path;
     } else {
-      url = `http://localhost:${process.env.PORT || 8080}/uploads/${req.file.filename}`;
+      url = `https://habitrek.onrender.com/uploads/${req.file.filename}`;
     }
     filename = req.file.filename || '';
   }
@@ -49,7 +49,7 @@ module.exports.updateListing = async (req, res) => {
     if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
       url = req.file.path;
     } else {
-      url = `http://localhost:${process.env.PORT || 8080}/uploads/${req.file.filename}`;
+      url = `https://habitrek.onrender.com/uploads/${req.file.filename}`;
     }
     listing.image = { url, filename: req.file.filename || '' };
     await listing.save();
