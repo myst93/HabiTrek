@@ -35,8 +35,8 @@ const dbPromise = mongoose
     return m.connection.getClient();
   })
   .catch((err) => {
-    console.error('❌ Database connection failed:', err);
-    throw err;
+    console.error('❌ Database connection failed:', err.message || err);
+    return null;
   });
 
 // Auto-seed only in development or if explicitly requested via SEED_DB env variable
