@@ -76,7 +76,8 @@ app.use(
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
       const allowedOrigins = [
-        'https://habitrek.onrender.com'
+        'https://habitrek.onrender.com',
+        'https://habi-trek.vercel.app'
       ];
       if (process.env.CLIENT_ORIGIN) {
         allowedOrigins.push(process.env.CLIENT_ORIGIN.replace(/\/$/, ''));
@@ -87,7 +88,9 @@ app.use(
         cleanOrigin.startsWith('http://127.0.0.1:') ||
         cleanOrigin === 'http://localhost' ||
         cleanOrigin === 'http://127.0.0.1';
-      if (allowedOrigins.includes(cleanOrigin) || isLocalhost) {
+      const isVercel = cleanOrigin.endsWith('.vercel.app');
+
+      if (allowedOrigins.includes(cleanOrigin) || isLocalhost || isVercel) {
         callback(null, true);
       } else {
         callback(new Error(`Not allowed by CORS: ${origin}`));
