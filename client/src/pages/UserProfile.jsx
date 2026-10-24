@@ -367,10 +367,19 @@ export default function UserProfile() {
                               <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)', display: 'block', marginTop: '0.1rem' }}>
                                 &#8377; {booking.totalPrice?.toLocaleString('en-IN')}
                               </strong>
+                              {booking.transactionId && (
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.2rem', fontFamily: 'monospace' }}>
+                                  Ref: {booking.transactionId}
+                                </span>
+                              )}
                             </div>
-                            {isPending && (
+                            {isPending ? (
                               <Link to={`/payment/${booking._id}`} className="btn btn-primary btn-sm" style={{ padding: '0.4rem 1rem', fontSize: '0.82rem', borderRadius: 'var(--radius-sm)', textDecoration: 'none' }}>
                                 <i className="fa-solid fa-credit-card" style={{ marginRight: '0.4rem' }}></i> Pay Now
+                              </Link>
+                            ) : (
+                              <Link to={`/payment/${booking._id}`} className="btn btn-outline btn-sm" style={{ padding: '0.4rem 1rem', fontSize: '0.82rem', borderRadius: 'var(--radius-sm)', textDecoration: 'none' }}>
+                                <i className="fa-solid fa-receipt" style={{ marginRight: '0.4rem' }}></i> View Receipt
                               </Link>
                             )}
                           </div>

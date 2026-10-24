@@ -11,12 +11,34 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function formatDateTime(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function detectCardBrand(num) {
+  const clean = (num || '').replace(/\D/g, '');
+  if (/^4/.test(clean)) return 'VISA';
+  if (/^5[1-5]/.test(clean)) return 'MASTERCARD';
+  if (/^(?:60|65|81|82)/.test(clean)) return 'RUPAY';
+  if (/^3[47]/.test(clean)) return 'AMEX';
+  return 'CARD';
+}
+
 export default function Payment() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
   const { currentUser, showFlash } = useAuth();
 
   const [booking, setBooking] = useState(null);
+  const [paymentRecord, setPaymentRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -24,6 +46,7 @@ export default function Payment() {
   const [paymentMethod, setPaymentMethod] = useState('card'); // 'card', 'upi', 'netbanking'
   const [paying, setPaying] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [copiedTxn, setCopiedTxn] = useState(false);
 
   // Card form states
   const [cardNum, setCardNum] = useState('');
@@ -45,7 +68,14 @@ export default function Payment() {
 
     api.get(`/bookings/${bookingId}`)
       .then((res) => {
-        setBooking(res.data.booking);
+        const fetchedBooking = res.data.booking;
+        setBooking(fetchedBooking);
+        if (fetchedBooking.payment) {
+          setPaymentRecord(fetchedBooking.payment);
+        }
+        if (fetchedBooking.status === 'Confirmed') {
+          setPaymentSuccess(true);
+        }
         setError(null);
       })
       .catch((err) => {
@@ -61,6 +91,14 @@ export default function Payment() {
     const value = e.target.value.replace(/\D/g, '').substring(0, 16);
     const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
     setCardNum(formatted);
+  };
+
+  const copyToClipboard = (text) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedTxn(true);
+    showFlash('success', 'Transaction ID copied to clipboard!');
+    setTimeout(() => setCopiedTxn(false), 2000);
   };
 
   const handlePaymentSubmit = async (e) => {
@@ -90,18 +128,31 @@ export default function Payment() {
 
     setPaying(true);
 
-    // Simulate network latency for payment gateway integration
+    // Simulate gateway verification latency and execute atomic transaction
     setTimeout(async () => {
       try {
-        await api.post(`/bookings/${bookingId}/pay`);
+        const payload = {
+          paymentMethod,
+          cardDetails: paymentMethod === 'card' ? {
+            last4: cardNum.replace(/\s/g, '').slice(-4),
+            nameOnCard: cardName.trim(),
+            brand: detectCardBrand(cardNum),
+          } : undefined,
+          upiId: paymentMethod === 'upi' ? upiId.trim() : undefined,
+          bankName: paymentMethod === 'netbanking' ? selectedBank.toUpperCase() : undefined,
+        };
+
+        const res = await api.post(`/bookings/${bookingId}/pay`, payload);
+        setBooking(res.data.booking);
+        setPaymentRecord(res.data.payment);
         setPaymentSuccess(true);
-        showFlash('success', 'Payment successful! Your stay is confirmed.');
+        showFlash('success', 'Payment verified and transaction settled! Stay confirmed.');
       } catch (err) {
-        showFlash('error', 'Payment failed: ' + err.message);
+        showFlash('error', err.message || 'Payment processing failed.');
       } finally {
         setPaying(false);
       }
-    }, 1800);
+    }, 1400);
   };
 
   if (loading) {
@@ -128,10 +179,11 @@ export default function Payment() {
 
   const listing = booking.listing || {};
   const imgSrc = listing.image?.url || listing.image || DEFAULT_IMG;
-  const nights = Math.max(1, Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000 * 60 * 60 * 24)));
-  const basePrice = listing.price ? listing.price * nights : 0;
-  const cleaningFee = Math.round(basePrice * 0.15);
-  const serviceFee = Math.round(basePrice * 0.08);
+  const nights = booking.priceBreakdown?.nights || Math.max(1, Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000 * 60 * 60 * 24)));
+  const basePrice = booking.priceBreakdown?.basePrice || (listing.price ? listing.price * nights : 0);
+  const cleaningFee = booking.priceBreakdown?.cleaningFee || Math.round(basePrice * 0.15);
+  const serviceFee = booking.priceBreakdown?.serviceFee || Math.round(basePrice * 0.08);
+  const currentTxnId = booking.transactionId || paymentRecord?.transactionId || 'TXN_VERIFIED';
 
   return (
     <div className="payment-page-container" style={{ padding: '2.5rem 0', maxWidth: '1100px', margin: '0 auto' }}>
@@ -148,44 +200,176 @@ export default function Payment() {
         <div className="payment-completed-card" style={{
           backgroundColor: 'white',
           border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-md)',
-          padding: '3rem 2rem',
-          textAlign: 'center',
+          borderRadius: 'var(--radius-lg)',
+          padding: '2.5rem',
           boxShadow: 'var(--shadow-md)',
-          maxWidth: '600px',
-          margin: '2rem auto'
+          maxWidth: '750px',
+          margin: '1.5rem auto'
         }}>
-          <div style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
-            backgroundColor: '#d4edda',
-            color: '#155724',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '2.5rem',
-            margin: '0 auto 1.5rem'
-          }}>
-            <i className="fa-solid fa-check"></i>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div style={{
+              width: '75px',
+              height: '75px',
+              borderRadius: '50%',
+              backgroundColor: '#eaf5f0',
+              color: 'var(--brand)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2.4rem',
+              margin: '0 auto 1.25rem'
+            }}>
+              <i className="fa-solid fa-circle-check"></i>
+            </div>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              Booking Confirmed &amp; Payment Settled!
+            </h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>
+              Transaction executed with ACID consistency. Your reservation is locked and verified in the ledger.
+            </p>
           </div>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Stay Booked Successfully! 🎉</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.6', marginBottom: '2rem' }}>
-            Thank you for booking with HabiTrek. Your payment of <strong>&#8377; {booking.totalPrice?.toLocaleString('en-IN')}</strong> has been processed successfully. Your booking is highlighted and verified under your profile bookings.
-          </p>
 
+          {/* Transaction Metadata Badge Box */}
           <div style={{
+            backgroundColor: 'var(--bg-light)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '2rem',
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem',
-            maxWidth: '400px',
-            margin: '0 auto'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1.25rem',
+            fontSize: '0.9rem'
           }}>
-            <Link to="/profile" className="btn btn-primary" style={{ padding: '0.75rem', textDecoration: 'none', textAlign: 'center' }}>
-              View in Profile
+            <div>
+              <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                Transaction ID
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+                <code style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', backgroundColor: 'white', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                  {currentTxnId}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(currentTxnId)}
+                  title="Copy Transaction ID"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand)', fontSize: '0.95rem' }}
+                >
+                  <i className={copiedTxn ? 'fa-solid fa-check' : 'fa-regular fa-copy'}></i>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                Payment Method
+              </span>
+              <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem', textTransform: 'capitalize' }}>
+                <i className={
+                  booking.paymentMethod === 'upi' ? 'fa-solid fa-mobile-screen-button' :
+                  booking.paymentMethod === 'netbanking' ? 'fa-solid fa-building-columns' :
+                  'fa-solid fa-credit-card'
+                } style={{ color: 'var(--brand)' }}></i>
+                {booking.paymentMethod || paymentRecord?.paymentMethod || 'Card'} 
+                {paymentRecord?.paymentDetails?.cardLast4 ? ` (•••• ${paymentRecord.paymentDetails.cardLast4})` : ''}
+              </strong>
+            </div>
+
+            <div>
+              <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                Confirmed On
+              </span>
+              <span style={{ display: 'block', marginTop: '0.2rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                {formatDateTime(booking.paidAt || booking.createdAt)}
+              </span>
+            </div>
+
+            <div>
+              <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                Status
+              </span>
+              <span style={{
+                display: 'inline-block',
+                marginTop: '0.2rem',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '999px',
+                backgroundColor: '#eaf5f0',
+                color: 'var(--brand)',
+                fontWeight: 700,
+                fontSize: '0.8rem'
+              }}>
+                <i className="fa-solid fa-shield-check" style={{ marginRight: '0.3rem' }}></i> Confirmed &amp; Paid
+              </span>
+            </div>
+          </div>
+
+          {/* Stay & Price Details Section */}
+          <div style={{
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '1.25rem', alignItems: 'center' }}>
+              <img
+                src={imgSrc}
+                alt={listing.title}
+                style={{ width: '90px', height: '70px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }}
+                onError={(e) => { e.target.src = DEFAULT_IMG; }}
+              />
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 0.25rem' }}>{listing.title || 'Stay'}</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                  <i className="fa-solid fa-location-dot" style={{ marginRight: '0.3rem' }}></i>
+                  {listing.location}, {listing.country}
+                </p>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', marginTop: '0.3rem', fontWeight: 600 }}>
+                  {formatDate(booking.startDate)} — {formatDate(booking.endDate)} ({nights} night{nights > 1 ? 's' : ''})
+                </div>
+              </div>
+            </div>
+
+            {/* Itemized Price Breakdown */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>&#8377; {listing.price?.toLocaleString('en-IN')} &times; {nights} night{nights > 1 ? 's' : ''}</span>
+                <span>&#8377; {basePrice.toLocaleString('en-IN')}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Cleaning fee (15%)</span>
+                <span>&#8377; {cleaningFee.toLocaleString('en-IN')}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Service fee (8%)</span>
+                <span>&#8377; {serviceFee.toLocaleString('en-IN')}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '0.75rem', marginTop: '0.25rem', fontSize: '1.1rem', fontWeight: 800 }}>
+                <span>Total Amount Paid</span>
+                <span style={{ color: 'var(--brand)' }}>&#8377; {booking.totalPrice?.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            justifyContent: 'center'
+          }}>
+            <button
+              onClick={() => window.print()}
+              className="btn btn-outline"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem' }}
+            >
+              <i className="fa-solid fa-print"></i> Print Receipt
+            </button>
+            <Link to="/profile" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', textDecoration: 'none' }}>
+              <i className="fa-solid fa-suitcase"></i> View in Bookings
             </Link>
-            <Link to={`/listings/${listing._id}`} className="btn btn-outline" style={{ padding: '0.75rem', textDecoration: 'none', textAlign: 'center' }}>
-              Back to Stay
+            <Link to={`/listings/${listing._id || ''}`} className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', textDecoration: 'none' }}>
+              Back to Listing
             </Link>
           </div>
         </div>
@@ -210,6 +394,7 @@ export default function Payment() {
                 gap: '1rem'
               }}>
                 <button
+                  type="button"
                   onClick={() => setPaymentMethod('card')}
                   style={{
                     flex: 1,
@@ -231,6 +416,7 @@ export default function Payment() {
                   <i className="fa-solid fa-credit-card"></i> Card
                 </button>
                 <button
+                  type="button"
                   onClick={() => setPaymentMethod('upi')}
                   style={{
                     flex: 1,
@@ -252,6 +438,7 @@ export default function Payment() {
                   <i className="fa-solid fa-mobile-screen-button"></i> UPI
                 </button>
                 <button
+                  type="button"
                   onClick={() => setPaymentMethod('netbanking')}
                   style={{
                     flex: 1,
@@ -294,7 +481,7 @@ export default function Payment() {
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div className="card-chip" style={{ width: '40px', height: '30px', backgroundColor: '#e5c158', borderRadius: '4px' }}></div>
-                        <i className="fa-brands fa-cc-visa" style={{ fontSize: '2.5rem' }}></i>
+                        <i className={`fa-brands fa-cc-${detectCardBrand(cardNum).toLowerCase()}`} style={{ fontSize: '2.5rem' }}></i>
                       </div>
                       <div className="card-number-display" style={{ fontSize: '1.35rem', letterSpacing: '2.5px', margin: '1.5rem 0 0.75rem', fontFamily: 'monospace', textAlign: 'center' }}>
                         {cardNum || '•••• •••• •••• ••••'}
@@ -367,7 +554,7 @@ export default function Payment() {
                           id="checkout-card-cvv"
                           className="form-control"
                           placeholder="***"
-                          maxLength={3}
+                          maxLength={4}
                           value={cardCvv}
                           onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
                           required={paymentMethod === 'card'}
@@ -392,28 +579,26 @@ export default function Payment() {
                     }}>
                       {/* Interactive mock QR Code */}
                       <div style={{ width: '150px', height: '150px', backgroundColor: 'white', border: '2px solid #333', padding: '10px', display: 'flex', flexWrap: 'wrap', gap: '3px', margin: '0 auto 0.75rem', position: 'relative' }}>
-                        {/* Mock QR corners */}
                         <div style={{ position: 'absolute', top: '10px', left: '10px', width: '30px', height: '30px', border: '6px solid black' }}></div>
                         <div style={{ position: 'absolute', top: '10px', right: '10px', width: '30px', height: '30px', border: '6px solid black' }}></div>
                         <div style={{ position: 'absolute', bottom: '10px', left: '10px', width: '30px', height: '30px', border: '6px solid black' }}></div>
-                        {/* Dummy noise patterns */}
                         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '8px', padding: '35px 5px 5px 35px' }}>
                           <div style={{ display: 'flex', gap: '6px' }}><div style={{ width: '10px', height: '10px', background: 'black' }}></div><div style={{ width: '15px', height: '10px', background: 'black' }}></div></div>
                           <div style={{ display: 'flex', gap: '6px' }}><div style={{ width: '25px', height: '8px', background: 'black' }}></div></div>
                           <div style={{ display: 'flex', gap: '6px' }}><div style={{ width: '8px', height: '10px', background: 'black' }}></div><div style={{ width: '12px', height: '10px', background: 'black' }}></div></div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Scan QR using BHIM UPI App</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Scan QR using any BHIM UPI App</span>
                     </div>
 
                     <div style={{ borderTop: '1px solid var(--border)', padding: '1.5rem 0 0', textAlign: 'left' }}>
-                      <label htmlFor="checkout-upi-id" style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem', color: 'var(--text-primary)' }}>Enter UPI ID</label>
+                      <label htmlFor="checkout-upi-id" style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem', color: 'var(--text-primary)' }}>Enter UPI ID / VPA</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <input
                           type="text"
                           id="checkout-upi-id"
                           className="form-control"
-                          placeholder="e.g. mobile@paytm"
+                          placeholder="e.g. yourname@okhdfcbank"
                           value={upiId}
                           onChange={(e) => setUpiId(e.target.value)}
                           required={paymentMethod === 'upi'}
@@ -502,7 +687,7 @@ export default function Payment() {
                   {paying ? (
                     <>
                       <div className="spinner" style={{ width: '20px', height: '20px', borderWidth: '3px', borderColor: 'white transparent white transparent' }}></div>
-                      <span>Verifying details...</span>
+                      <span>Verifying with bank &amp; executing atomic settlement...</span>
                     </>
                   ) : (
                     <>
@@ -541,18 +726,17 @@ export default function Payment() {
                     </p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}>
-                    <i className="fa-solid fa-star" style={{ color: 'var(--brand)', fontSize: '0.75rem' }}></i>
-                    <strong>{listing.review?.length > 0 ? (listing.review.reduce((acc, r) => acc + r.rating, 0) / listing.review.length).toFixed(1) : 'New'}</strong>
-                    <span style={{ color: 'var(--text-muted)' }}>({listing.review?.length || 0} reviews)</span>
+                    <i className="fa-solid fa-shield-check" style={{ color: 'var(--brand)', fontSize: '0.85rem' }}></i>
+                    <span style={{ color: 'var(--brand)', fontWeight: 700 }}>ACID Protected</span>
                   </div>
                 </div>
               </div>
 
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1rem' }}>Price Details</h4>
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1rem' }}>Price Breakdown</h4>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '1.25rem', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>&#8377; {listing.price?.toLocaleString('en-IN')} x {nights} night{nights > 1 ? 's' : ''}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>&#8377; {listing.price?.toLocaleString('en-IN')} &times; {nights} night{nights > 1 ? 's' : ''}</span>
                   <strong>&#8377; {basePrice.toLocaleString('en-IN')}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>

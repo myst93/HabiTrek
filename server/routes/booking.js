@@ -11,6 +11,9 @@ router.route('/')
 router.route('/:id')
   .get(isLoggedIn, wrapAsync(bookingController.getBookingById));
 
+router.route('/:id/receipt')
+  .get(isLoggedIn, wrapAsync(bookingController.getBookingReceipt));
+
 router.route('/:id/pay')
   .post(isLoggedIn, wrapAsync(bookingController.processBookingPayment));
 

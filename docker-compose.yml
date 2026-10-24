@@ -1,0 +1,50 @@
+services:
+  # ─── Express Backend Service ───────────────────────────────────────────────
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: habitrek-server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./server/.env
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+    networks:
+      - habitrek-network
+
+  # ─── React Vite + Nginx Frontend Service ────────────────────────────────────
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: habitrek-client
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - habitrek-network
+
+  # ─── Optional Local MongoDB (Uncomment to use local DB instead of Atlas) ───
+  # mongo:
+  #   image: mongo:7.0
+  #   container_name: habitrek-mongo
+  #   restart: unless-stopped
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo-data:/data/db
+  #   networks:
+  #     - habitrek-network
+
+networks:
+  habitrek-network:
+    driver: bridge
+
+# volumes:
+#   mongo-data:
