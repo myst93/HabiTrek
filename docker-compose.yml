@@ -24,7 +24,7 @@ services:
     container_name: habitrek-client
     restart: unless-stopped
     ports:
-      - "5173:80"
+      - "80:80"
     depends_on:
       - backend
     networks:
