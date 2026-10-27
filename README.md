@@ -14,7 +14,6 @@
   - [Option A: Running with Docker (Recommended)](#option-a-running-with-docker-recommended)
   - [Option B: Running Locally (Development)](#option-b-running-locally-development)
 - [📡 API Documentation](#-api-documentation)
-- [🛡️ ACID Payment Verification](#️-acid-payment-verification)
 - [🤝 Contributing & License](#-contributing--license)
 
 ---
