@@ -254,55 +254,6 @@ npm run dev
 
 ---
 
-## 🛡️ ACID Payment Verification
-
-The reservation and payment module was audited and implemented to meet strict financial transaction requirements:
-
-```javascript
-// Atomically execute payment and record in the ledger
-const session = await mongoose.startSession();
-session.startTransaction();
-try {
-  // 1. Snapshot conflict check to prevent double bookings
-  const conflict = await Booking.findOne({
-    listing: targetBooking.listing._id,
-    status: 'Confirmed',
-    startDate: { $lt: targetBooking.endDate },
-    endDate: { $gt: targetBooking.startDate }
-  }).session(session);
-
-  if (conflict) throw new Error('Selected dates are already booked.');
-
-  // 2. Atomic Compare-And-Swap (CAS) update
-  const updatedBooking = await Booking.findOneAndUpdate(
-    { _id: bookingId, user: req.user._id, status: 'Pending' },
-    { $set: { status: 'Confirmed', transactionId, paymentMethod, paidAt: new Date() } },
-    { new: true, session }
-  );
-
-  // 3. Immutable audit ledger entry
-  const paymentDoc = new Payment({
-    booking: updatedBooking._id,
-    user: req.user._id,
-    listing: updatedBooking.listing,
-    amount: updatedBooking.totalPrice,
-    transactionId,
-    paymentMethod,
-    status: 'Success'
-  });
-  await paymentDoc.save({ session });
-
-  await session.commitTransaction();
-} catch (err) {
-  await session.abortTransaction();
-  throw err;
-} finally {
-  session.endSession();
-}
-```
-
----
-
 ## 🤝 Contributing & License
 
 1. Fork the repository.
