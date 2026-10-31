@@ -1,6 +1,4 @@
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
+require('dotenv').config();
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -74,25 +72,47 @@ if (process.env.NODE_ENV !== 'production' || process.env.SEED_DB === 'true') {
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, or same-origin server-to-server)
       if (!origin) return callback(null, true);
+
       const allowedOrigins = [
         'https://habitrek.onrender.com',
-        'https://habi-trek.vercel.app'
+        'https://habi-trek.vercel.app',
       ];
+
+      // Support comma-separated CLIENT_ORIGIN
       if (process.env.CLIENT_ORIGIN) {
-        allowedOrigins.push(process.env.CLIENT_ORIGIN.replace(/\/$/, ''));
+        process.env.CLIENT_ORIGIN.split(',').forEach((orig) => {
+          const trimmed = orig.trim().replace(/\/$/, '');
+          if (trimmed) allowedOrigins.push(trimmed);
+        });
       }
+
       const cleanOrigin = origin.replace(/\/$/, '');
+
+      // Localhost checks (dev servers)
       const isLocalhost =
         cleanOrigin.startsWith('http://localhost:') ||
         cleanOrigin.startsWith('http://127.0.0.1:') ||
         cleanOrigin === 'http://localhost' ||
         cleanOrigin === 'http://127.0.0.1';
+
+      // Vercel deployment preview / prod domains
       const isVercel = cleanOrigin.endsWith('.vercel.app');
 
-      if (allowedOrigins.includes(cleanOrigin) || isLocalhost || isVercel) {
+      // Direct IP address deployment (IPv4 with optional port, e.g. AWS EC2 http://18.234.66.155)
+      const isIpAddress = /^https?:\/\/(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(cleanOrigin);
+
+      // AWS EC2 public DNS hostnames (e.g. ec2-xx-xx-xx-xx.compute-1.amazonaws.com)
+      const isAwsEc2 = /^https?:\/\/ec2-[^.]+\.compute(-1)?\.amazonaws\.com(:\d+)?$/.test(cleanOrigin);
+
+      // Wildcard check
+      const allowAll = process.env.CLIENT_ORIGIN === '*';
+
+      if (allowAll || allowedOrigins.includes(cleanOrigin) || isLocalhost || isVercel || isIpAddress || isAwsEc2) {
         callback(null, true);
       } else {
+        console.warn(`⚠️ CORS blocked request from origin: ${origin}`);
         callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
@@ -115,6 +135,19 @@ const store = MongoStore.create({
 
 store.on('error', (err) => console.error('Session store error:', err));
 
+// In production on HTTPS (e.g. Render backend + Vercel frontend), secure=true & sameSite='none' are required.
+// In HTTP deployments (e.g. direct AWS EC2 public IP http://18.234.66.155 without SSL), secure must be false
+// and sameSite must be 'lax' so browsers don't reject cookies.
+const isProduction = process.env.NODE_ENV === 'production';
+const isExplicitSecure = process.env.COOKIE_SECURE === 'true';
+const isExplicitInsecure = process.env.COOKIE_SECURE === 'false';
+const hasHttpOrigin =
+  process.env.CLIENT_ORIGIN &&
+  process.env.CLIENT_ORIGIN.split(',').some((o) => o.trim().startsWith('http://'));
+
+const cookieSecure = isExplicitSecure || (isProduction && !isExplicitInsecure && !hasHttpOrigin);
+const cookieSameSite = cookieSecure ? 'none' : 'lax';
+
 app.use(
   session({
     store,
@@ -125,8 +158,8 @@ app.use(
       httpOnly: true,
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: cookieSameSite,
+      secure: cookieSecure,
     },
   })
 );

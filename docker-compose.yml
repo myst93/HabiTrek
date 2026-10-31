@@ -13,6 +13,8 @@ services:
     environment:
       - PORT=8080
       - NODE_ENV=production
+      - CLIENT_ORIGIN=${CLIENT_ORIGIN:-http://18.234.66.155,http://localhost,http://localhost:5173,http://localhost:80}
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
     networks:
       - habitrek-network
 

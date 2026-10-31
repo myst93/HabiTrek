@@ -156,8 +156,11 @@ GEMINI_API_KEY=your_gemini_api_key
 # Geolocation / Mapping API Key (optional)
 MAP_API_KEY=your_map_api_key
 
-# Client Origin (CORS whitelist for production)
-CLIENT_ORIGIN=http://localhost:5173,http://localhost:80
+# Client Origin (CORS whitelist for production - comma-separated)
+CLIENT_ORIGIN=http://localhost:5173,http://localhost:80,http://<your-ec2-ip>
+
+# Cookie Security (set to false for HTTP deployments like AWS EC2 IP without SSL; true for HTTPS)
+COOKIE_SECURE=false
 ```
 
 ---
